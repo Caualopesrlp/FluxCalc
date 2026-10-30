@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Sparkles, Trash2, Volume2, VolumeX, Download, Layers, BookOpen } from 'lucide-react';
+import { Sparkles, Trash2, Volume2, VolumeX, Download, Layers, FileText } from 'lucide-react';
 
 interface HeaderProps {
   totalLines: number;
@@ -15,6 +15,7 @@ interface HeaderProps {
   onOpenClearConfirm: () => void;
   onExport: () => void;
   onCopyTape: () => void;
+  onOpenReceipt: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenClearConfirm,
   onExport,
   onCopyTape,
+  onOpenReceipt,
 }) => {
   return (
     <header className="bg-zinc-900 border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between shrink-0 select-none">
@@ -49,6 +51,16 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center gap-1 sm:gap-1.5">
+        <button
+          onClick={onOpenReceipt}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/60 rounded-lg transition-colors cursor-pointer shadow-sm shadow-emerald-950"
+          title="Exportar Comprovante / Recibo em Texto para WhatsApp e Telegram"
+          aria-label="Abrir comprovante em texto"
+        >
+          <FileText className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="hidden sm:inline">Comprovante</span>
+        </button>
+
         <button
           onClick={onOpenPresets}
           className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-amber-300 bg-amber-950/40 hover:bg-amber-900/40 border border-amber-800/50 rounded-lg transition-colors cursor-pointer"

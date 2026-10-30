@@ -95,5 +95,27 @@ class TestFluxCalc(unittest.TestCase):
         # Note capped at 25 chars
         self.assertEqual(len(l1.tokens[0].label), 25)
 
+    def test_receipt_formatting(self):
+        from fluxcalc.receipt import format_line_receipt, format_full_tape_receipt
+        l1 = Line(
+            id="l1",
+            line_index=1,
+            tokens=[
+                Token(id="t1", type="number", value="120", label="Luz"),
+                Token(id="t2", type="operator", value="+"),
+                Token(id="t3", type="number", value="80", label="Internet"),
+            ],
+            result=200.0
+        )
+        receipt = format_line_receipt(l1, {"l1": l1})
+        self.assertIn("--- FluxCalc: Linha 1 ---", receipt)
+        self.assertIn("Item 1 (Luz): R$ 120,00", receipt)
+        self.assertIn("Item 2 (Internet): R$ 80,00", receipt)
+        self.assertIn("Total: R$ 200,00", receipt)
+
+        full_tape = format_full_tape_receipt([l1], {"l1": l1})
+        self.assertIn("FLUXCALC: COMPROVANTE GERAL", full_tape)
+        self.assertIn("RESULTADO FINAL: R$ 200,00", full_tape)
+
 if __name__ == "__main__":
     unittest.main()

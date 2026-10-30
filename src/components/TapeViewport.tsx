@@ -5,7 +5,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Line, Token, formatBrNumber } from '../utils/calcEngine';
-import { Tag, Link, AlertTriangle, ArrowRight, CornerDownLeft, Check, X, Pencil } from 'lucide-react';
+import { Tag, Link, AlertTriangle, ArrowRight, CornerDownLeft, Check, X, Pencil, FileText, Share2 } from 'lucide-react';
 
 interface TapeViewportProps {
   lines: Line[];
@@ -21,6 +21,7 @@ interface TapeViewportProps {
   onCancelInlineEdit: () => void;
   onInlineInputChange: (val: string) => void;
   inlineInputValue: string;
+  onOpenReceipt: (lineId?: string) => void;
 }
 
 export const TapeViewport: React.FC<TapeViewportProps> = ({
@@ -37,6 +38,7 @@ export const TapeViewport: React.FC<TapeViewportProps> = ({
   onCancelInlineEdit,
   onInlineInputChange,
   inlineInputValue,
+  onOpenReceipt,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inlineInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +69,25 @@ export const TapeViewport: React.FC<TapeViewportProps> = ({
     >
       {/* Background tape watermark / paper strip feel */}
       <div className="max-w-2xl mx-auto space-y-3 pb-6">
+        {/* Top ribbon: Fita overview & Comprovante button */}
+        {lines.length > 0 && (
+          <div className="flex items-center justify-between px-2.5 py-1.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-xs text-zinc-400">
+            <span className="text-[11px] font-medium text-zinc-400 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              Fita de Cálculos ({lines.length} {lines.length === 1 ? 'conta selada' : 'contas seladas'})
+            </span>
+            <button
+              onClick={() => onOpenReceipt()}
+              className="flex items-center gap-1 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-950/50 hover:bg-emerald-900/50 px-2.5 py-1 rounded-lg border border-emerald-800/60 transition-colors cursor-pointer"
+              title="Gerar e copiar comprovante da fita inteira (WhatsApp/E-mail)"
+              aria-label="Exportar comprovante geral"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Copiar Comprovante</span>
+            </button>
+          </div>
+        )}
+
         {lines.length === 0 && activeTokens.length === 0 && !activeNumberInput && (
           <div className="py-8 text-center text-zinc-500">
             <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
@@ -116,12 +137,23 @@ export const TapeViewport: React.FC<TapeViewportProps> = ({
                   )}
                 </div>
 
-                <div className="text-zinc-500 font-mono text-[10px]">
-                  {new Date(line.timestamp).toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                  })}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onOpenReceipt(line.id)}
+                    className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-emerald-300 hover:bg-zinc-800/80 px-1.5 py-0.5 rounded border border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer"
+                    title="Exportar comprovante desta conta (WhatsApp/E-mail)"
+                    aria-label={`Comprovante da Linha L${line.lineIndex}`}
+                  >
+                    <FileText className="w-3 h-3 text-emerald-400" />
+                    <span className="hidden sm:inline">Comprovante</span>
+                  </button>
+                  <div className="text-zinc-500 font-mono text-[10px]">
+                    {new Date(line.timestamp).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -284,15 +316,26 @@ export const TapeViewport: React.FC<TapeViewportProps> = ({
               </span>
               <span className="text-zinc-500">• Conta em digitação</span>
             </div>
-            {editingTarget ? (
-              <span className="text-amber-400 font-medium bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
-                ✏️ Editando Linha Retroativa
-              </span>
-            ) : (
-              <span className="text-zinc-500 text-[10px]">
-                Pressione AC para nova linha
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onOpenReceipt()}
+                className="flex items-center gap-1 text-[10px] text-zinc-400 hover:text-emerald-300 hover:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer"
+                title="Gerar e copiar comprovante desta conta (WhatsApp/E-mail)"
+                aria-label="Comprovante da conta ativa"
+              >
+                <FileText className="w-3 h-3 text-emerald-400" />
+                <span>Comprovante</span>
+              </button>
+              {editingTarget ? (
+                <span className="text-amber-400 font-medium bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
+                  ✏️ Editando Linha Retroativa
+                </span>
+              ) : (
+                <span className="text-zinc-500 text-[10px]">
+                  Pressione AC para nova linha
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-h-[38px] font-mono text-base">

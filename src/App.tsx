@@ -21,6 +21,8 @@ import { NoteModal } from './components/NoteModal';
 import { ClearConfirmModal } from './components/ClearConfirmModal';
 import { PresetSelectorModal } from './components/PresetSelectorModal';
 import { ExportModal } from './components/ExportModal';
+import { ReceiptModal } from './components/ReceiptModal';
+import { copyToClipboard } from './utils/receiptFormatter';
 import { playKeyClick } from './utils/sound';
 import { PresetScenario } from './utils/presets';
 
@@ -76,6 +78,8 @@ export default function App() {
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [selectedReceiptLineId, setSelectedReceiptLineId] = useState<string | null>(null);
   const [copyFeedbackToast, setCopyFeedbackToast] = useState<string | null>(null);
 
   // Line Map lookup for dependency resolution
@@ -111,6 +115,38 @@ export default function App() {
     }
     return evaluateTokens(tempTokens, lineMap);
   }, [activeTokens, activeNumberInput, lineMap]);
+
+  // Active Draft Line representation for receipt export
+  const activeDraftLine = useMemo<Line | null>(() => {
+    const currentTokens = [...activeTokens];
+    if (activeNumberInput.trim() !== '') {
+      currentTokens.push({
+        id: 'draft-num-token',
+        type: 'number',
+        value: activeNumberInput,
+      });
+    }
+    if (currentTokens.length === 0) return null;
+    return {
+      id: 'active-draft-line',
+      lineIndex: activeLineIndex,
+      tokens: currentTokens,
+      result: activeDraftResult.result,
+      error: activeDraftResult.error,
+      isSealed: false,
+      timestamp: Date.now(),
+    };
+  }, [activeTokens, activeNumberInput, activeLineIndex, activeDraftResult]);
+
+  const handleOpenReceipt = useCallback((lineId?: string) => {
+    setSelectedReceiptLineId(lineId || null);
+    setIsReceiptModalOpen(true);
+  }, []);
+
+  const handleToastMessage = useCallback((msg: string) => {
+    setCopyFeedbackToast(msg);
+    setTimeout(() => setCopyFeedbackToast(null), 2500);
+  }, []);
 
   // Persist lines to localStorage
   useEffect(() => {
@@ -667,9 +703,14 @@ export default function App() {
       })
       .join('\n');
 
-    navigator.clipboard.writeText(text);
-    setCopyFeedbackToast('Fita copiada com sucesso!');
-    setTimeout(() => setCopyFeedbackToast(null), 2000);
+    copyToClipboard(text).then((success) => {
+      if (success) {
+        setCopyFeedbackToast('Fita copiada com sucesso!');
+      } else {
+        setCopyFeedbackToast('Texto pronto para cópia!');
+      }
+      setTimeout(() => setCopyFeedbackToast(null), 2500);
+    });
   }, [lines]);
 
   // Physical Keyboard Listener
@@ -756,6 +797,7 @@ export default function App() {
         onOpenClearConfirm={() => setIsClearModalOpen(true)}
         onExport={() => setIsExportModalOpen(true)}
         onCopyTape={handleCopyTape}
+        onOpenReceipt={() => handleOpenReceipt()}
       />
 
       {/* Viewport Fita Viva (45% a 50% da altura, rolável) */}
@@ -787,6 +829,7 @@ export default function App() {
           }
         }}
         inlineInputValue={inlineInputValue}
+        onOpenReceipt={handleOpenReceipt}
       />
 
       {/* Teclado Numérico Fixo (50% a 55% da altura) */}
@@ -808,6 +851,16 @@ export default function App() {
       />
 
       {/* Modais */}
+      <ReceiptModal
+        isOpen={isReceiptModalOpen}
+        lines={lines}
+        activeTokensLine={activeDraftLine}
+        selectedLineId={selectedReceiptLineId}
+        lineLookup={lineMap}
+        onClose={() => setIsReceiptModalOpen(false)}
+        onCopySuccess={handleToastMessage}
+      />
+
       <NoteModal
         isOpen={noteModal.isOpen}
         tokenValue={noteModal.tokenValue}
